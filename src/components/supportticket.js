@@ -323,7 +323,7 @@ import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
-import { Grid, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Grid, FormControl, InputLabel, Select, MenuItem,Pagination } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import axios from 'axios';
@@ -331,35 +331,37 @@ import TicketForm from './addsupportticket';
 import BlueButton from '../common/BlueButton';
 import 'bootstrap/dist/css/bootstrap.css';
 import './support.css';
+import TicketStatusStepper from './ticket_status';
 
 const SupportTicket = () => {
-  const filterData = [
-    { id: 1, name: 'Login Issue', module: 'Auth', createdBy: 'Alice', status: 'Open', type: 'Bug', action: 'Edit' },
-    { id: 2, name: 'UI Enhancement', module: 'Dashboard', createdBy: 'Bob', status: 'In Progress', type: 'Feature', action: 'Edit' },
-    { id: 3, name: 'API Error', module: 'Backend', createdBy: 'Charlie', status: 'Closed', type: 'Bug', action: 'Edit' },
-    { id: 4, name: 'UI Enhancement', module: 'Dashboard', createdBy: 'Bob', status: 'In Progress', type: 'Feature', action: 'Edit' },
-    { id: 5, name: 'API Error', module: 'Backend', createdBy: 'Charlie', status: 'Closed', type: 'Bug', action: 'Edit' },
-    { id: 6, name: 'UI Enhancement', module: 'Dashboard', createdBy: 'Bob', status: 'In Progress', type: 'Feature', action: 'Edit' },
-    { id: 7, name: 'Feature Request', module: 'UI', createdBy: 'Dave', status: 'Open', type: 'Feature', action: 'Edit' },
-    { id: 8, name: 'Database Issue', module: 'Database', createdBy: 'Eve', status: 'Resolved', type: 'Bug', action: 'Edit' },
-    { id: 9, name: 'Performance Issue', module: 'Backend', createdBy: 'Frank', status: 'Reopened', type: 'Bug', action: 'Edit' },
-    { id: 10, name: 'Login Enhancement', module: 'Auth', createdBy: 'Grace', status: 'Invalid', type: 'Feature', action: 'Edit' },
-    { id: 11, name: 'Security Flaw', module: 'Auth', createdBy: 'Heidi', status: 'Resolved', type: 'Bug', action: 'Edit' },
-    { id: 12, name: 'UI Bug', module: 'UI', createdBy: 'Ivan', status: 'In Progress', type: 'Bug', action: 'Edit' },
-    { id: 13, name: 'API Update', module: 'Backend', createdBy: 'Judy', status: 'Open', type: 'Feature', action: 'Edit' },
-    { id: 14, name: 'Auth Error', module: 'Auth', createdBy: 'Alice', status: 'Closed', type: 'Bug', action: 'Edit' },
-    { id: 15, name: 'New Module', module: 'Analytics', createdBy: 'Bob', status: 'In Progress', type: 'Feature', action: 'Edit' },
-    { id: 16, name: 'UI Update', module: 'UI', createdBy: 'Charlie', status: 'Open', type: 'Feature', action: 'Edit' },
-    { id: 17, name: 'Performance Bug', module: 'Backend', createdBy: 'Dave', status: 'Resolved', type: 'Bug', action: 'Edit' },
-    { id: 18, name: 'Security Patch', module: 'Security', createdBy: 'Eve', status: 'Reopened', type: 'Bug', action: 'Edit' },
-    { id: 19, name: 'Login Issue', module: 'Auth', createdBy: 'Frank', status: 'Invalid', type: 'Bug', action: 'Edit' },
-    { name: 'Data Sync', module: 'Sync', createdBy: 'Grace', status: 'Closed', type: 'Bug', action: 'Edit' }
-  ];
 
   const [filter, setFilter] = useState('');
-  const [filteredData, setFilteredData] = useState(filterData);
+  const [filteredData, setFilteredData] = useState([]);
   const [Formopen, setFormopen] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const [currentPage,setCurrentPage] = useState(1);
+
+  const [selectedTicket,setSelectedticket] = useState(null);
+  const [viewStatusopen,setViewStatusOpen] = useState(false);
+
+//View the Status of the Particular Ticket
+const clickViewButton = (ticket) =>{
+      setSelectedticket(ticket);
+      setViewStatusOpen(true);
+}
+
+
+//Pagination
+  const page_count = () => {
+    if (filteredData?.total_results && filteredData?.results_per_page) {
+      const page_number = Math.ceil(
+        filteredData?.total_results / filteredData?.results_per_page
+      );
+      return page_number;
+    } else {
+      return 1;
+    }
+  };
 
   const handleChange = (event) => {
     setFilter(event.target.value);
@@ -376,7 +378,7 @@ const SupportTicket = () => {
 
   const handleStepClick = (index, status) => {
     setActiveStep(index);
-    setFilteredData(filterData.filter(ticket => ticket.status === status || status === 'All'));
+    setFilteredData(filteredData.filter(ticket => ticket.status === status || status === 'All'));
   };
 
   const FormhandleClose = () => {
@@ -384,7 +386,7 @@ const SupportTicket = () => {
   };
 
   useEffect(() => {
-    axios.get('https://GetApi.for.filterdata')
+    axios.get('https://66b47a079f9169621ea3193d.mockapi.io/totalticket')
       .then(response => {
         setFilteredData(response.data);
       })
@@ -480,16 +482,16 @@ const SupportTicket = () => {
               </thead>
               <tbody>
                 {filteredData.map((ticket) => (
-                  <tr key={ticket.id} className="text-center">
-                    <td>{ticket.id}</td>
-                    <td>{ticket.name}</td>
+                  <tr key={ticket.ticket_code} className="text-center">
+                    <td>{ticket.ticket_code}</td>
+                    <td>{ticket.title}</td>
                     <td>{ticket.module}</td>
-                    <td>{ticket.createdBy}</td>
+                    <td>{ticket.created_by}</td>
                     <td>{ticket.status}</td>
                     <td>{ticket.type}</td>
                     <td className="text-center">
-                      <IconButton color="primary">
-                        <VisibilityIcon />
+                      <IconButton color="primary" onClick={() => clickViewButton(ticket)}>
+                        <VisibilityIcon/>
                       </IconButton>
                       <IconButton id="EditTicket">
                         <EditIcon />
@@ -499,6 +501,18 @@ const SupportTicket = () => {
                 ))}
               </tbody>
             </table>
+            <Grid container display="flex" justifyContent="center">
+            <Pagination
+              count={page_count()}
+              shape="rounded"
+              page={currentPage}
+              onChange={(event, value) => {
+                setCurrentPage(value);
+              }}
+              boundaryCount={2}
+            />
+          </Grid>
+        
           </Grid>
           <Grid item xs={12} md={2}>
             <div className='d-flex justify-content-center align-items-center'>
@@ -535,6 +549,54 @@ const SupportTicket = () => {
           </Grid>
         </Grid>
       </div>
+
+      {/* Ticket Status */}
+      <div id="Ticket Status">
+      <Dialog
+          open={viewStatusopen}
+          onClose={() => setViewStatusOpen(false)}
+          aria-labelledby="ticket-status-title"
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle id="ticket-dialog-title">
+            {selectedTicket && (
+              <>{selectedTicket.ticket_code}</>
+            )}
+            <IconButton
+              aria-label="close"
+              onClick={() => setViewStatusOpen(false)}
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            {selectedTicket && (
+              <Box sx={{ p: 2 }}>
+                <p><strong>Ticket ID:</strong> {selectedTicket.ticket_code}</p>
+                <p><strong>Ticket Name:</strong> {selectedTicket.title}</p>
+                <p><strong>Module:</strong> {selectedTicket.module}</p>
+                <p><strong>Created By:</strong> {selectedTicket.created_by}</p>
+                <p><strong>Created On:</strong> {selectedTicket.created_on}</p>
+                <p><strong>Ticket Type:</strong> {selectedTicket.type}</p>
+                <p><strong>Status:</strong> {selectedTicket.status}</p> 
+                <hr/>
+                <TicketStatusStepper status={selectedTicket.status}/>
+              </Box>
+            )}
+            
+
+          </DialogContent>
+        </Dialog>
+      </div>
+         
+
       <br /><br /><br />
     </div>
   );
