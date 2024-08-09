@@ -332,6 +332,9 @@ import BlueButton from '../common/BlueButton';
 import 'bootstrap/dist/css/bootstrap.css';
 import './support.css';
 import TicketStatusStepper from './ticket_status';
+import Table from 'react-bootstrap/Table';
+import moment from 'moment';
+
 
 const SupportTicket = () => {
 
@@ -344,6 +347,19 @@ const SupportTicket = () => {
   const [selectedTicket,setSelectedticket] = useState(null);
   const [viewStatusopen,setViewStatusOpen] = useState(false);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [ticketToEdit, setTicketToEdit] = useState(null);
+
+  const [editData,setEditData] = useState()
+
+  const clickEditButton = (ticket) => {
+    setEditData(ticket);
+    setFormopen(true);
+  };
+
+  const handleFormClose = () =>{
+    setFormopen(false);
+  }
 //View the Status of the Particular Ticket
 const clickViewButton = (ticket) =>{
       setSelectedticket(ticket);
@@ -387,13 +403,31 @@ const clickViewButton = (ticket) =>{
 
   useEffect(() => {
     axios.get('https://66b47a079f9169621ea3193d.mockapi.io/totalticket')
-      .then(response => {
+      .then(response => {                
         setFilteredData(response.data);
       })
       .catch(error => {
         console.error('Error fetching data:', error);
       });
   }, []);
+
+
+   const handleFormSubmit = async (formData) => {
+    if (ticketToEdit) {
+      try {
+        await axios.put(`https://66b47a079f9169621ea3193d.mockapi.io/totalticket/${ticketToEdit.id}`, formData);
+        console.log('Ticket updated successfully');
+        setIsEditing(false);
+        setSelectedTicket(null);
+        setTicketToEdit(null);
+      } catch (error) {
+        console.error('Error updating the ticket:', error);
+      }
+    } else {
+      // Create new ticket logic
+      console.log('Creating new ticket:', formData);
+    }
+  };
 
   return (
     <div className="ag-theme-alpine" style={{ height: "80vh", margin: "5vh" }}>
@@ -418,7 +452,9 @@ const clickViewButton = (ticket) =>{
               fullWidth
             >
               <DialogTitle id="dialog-title">
-                Raise Ticket
+                {editData && "Edit Ticket"}
+                {!editData && "Raise Ticket"}
+
                 <IconButton
                   aria-label="close"
                   onClick={FormhandleClose}
@@ -433,7 +469,7 @@ const clickViewButton = (ticket) =>{
                 </IconButton>
               </DialogTitle>
               <DialogContent dividers sx={{ bgcolor: 'background.paper', borderRadius: 2 }}>
-                <TicketForm />
+                <TicketForm initialTicketData={editData} onSubmit={handleFormSubmit} />
               </DialogContent>
             </Dialog>
             <div className="tooltip">
@@ -468,8 +504,8 @@ const clickViewButton = (ticket) =>{
       <div className="container-fluid">
         <Grid container spacing={2} className="mb-3">
           <Grid item xs={12} md={10}>
-            <table className="table table-striped table-bordered fs-6">
-              <thead className="thead-dark">
+          <Table striped bordered hover className='fs-6'>
+          <thead className="thead-dark">
                 <tr className="text-center">
                   <th style={{ padding: '10px', backgroundColor: '#00308f', color: 'white' }}>Ticket ID</th>
                   <th style={{ padding: '10px', backgroundColor: '#00308f', color: 'white' }}>Ticket Name</th>
@@ -492,15 +528,15 @@ const clickViewButton = (ticket) =>{
                     <td className="text-center">
                       <IconButton color="primary" onClick={() => clickViewButton(ticket)}>
                         <VisibilityIcon/>
-                      </IconButton>
-                      <IconButton id="EditTicket">
+                      </IconButton>                      
+                      <IconButton id="EditTicket" onClick={() => clickEditButton(ticket)}>
                         <EditIcon />
                       </IconButton>
                     </td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Table>
             <Grid container display="flex" justifyContent="center">
             <Pagination
               count={page_count()}
@@ -579,27 +615,31 @@ const clickViewButton = (ticket) =>{
           <DialogContent dividers>
             {selectedTicket && (
               <Box sx={{ p: 2 }}>
-                <p><strong>Ticket ID:</strong> {selectedTicket.ticket_code}</p>
-                <p><strong>Ticket Name:</strong> {selectedTicket.title}</p>
-                <p><strong>Module:</strong> {selectedTicket.module}</p>
-                <p><strong>Created By:</strong> {selectedTicket.created_by}</p>
-                <p><strong>Created On:</strong> {selectedTicket.created_on}</p>
-                <p><strong>Ticket Type:</strong> {selectedTicket.type}</p>
-                <p><strong>Status:</strong> {selectedTicket.status}</p> 
-                <hr/>
-                <TicketStatusStepper status={selectedTicket.status}/>
-              </Box>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <TicketStatusStepper status={selectedTicket.status} />
+                </Grid>
+                <Grid item xs={12} md={8}>
+                  <p><strong>Ticket ID:</strong> {selectedTicket.ticket_code}</p>
+                  <p><strong>Ticket Name:</strong> {selectedTicket.title}</p>
+                  <p><strong>Module:</strong> {selectedTicket.module}</p>
+                  <p><strong>Created By:</strong> {selectedTicket.created_by}</p>
+                  <p><strong>Created On:</strong> {selectedTicket.created_on}</p>
+                  <p><strong>Ticket Type:</strong> {selectedTicket.type}</p>
+                  <p><strong>Status:</strong> {selectedTicket.status}</p> 
+                </Grid>
+              </Grid>
+            </Box>
             )}
-            
-
           </DialogContent>
         </Dialog>
       </div>
-         
-
+      {/* ticket editing */}
+      
       <br /><br /><br />
     </div>
   );
 }
 
 export default  SupportTicket;
+
